@@ -3,11 +3,8 @@
 # Jan 2021
 
 import csv
-
-# load csv
-# Strip into Evidence ID, SOC 2, and ISO columns
-# Make Dictionaries for each framework, Dict {control -> (EIDs)}
-
+import matplotlib.pyplot as plt
+import numpy as np
 
 # NOTE:  some may be duplicates.
 def parse_csv(filename):
@@ -48,19 +45,51 @@ def get_framework_ETs(fw1, fw2):
             partial.append(control)
         else:
             not_done.append(control)
-    return completed, partial, not_done
+    return len(completed), len(partial), len(not_done)
 
 
 def compare_framework_ETs(fw1, fw2):
     completed, partial, not_done = get_framework_ETs(fw1, fw2)
-    print("Completed controls: {0}".format(len(completed)))
-    print("Partially Completed controls: {0}".format(len(partial)))
-    print("Controls with no ETs: {0}".format(len(not_done)))
+    print("Completed controls: {0}".format(completed))
+    print("Partially Completed controls: {0}".format(partial))
+    print("Controls with no ETs: {0}".format(not_done))
 
 
+def create_visuals(SOC_values, ISO_values):
+    labels = ['SOC', 'ISO']
+    completed_vals = [SOC_values[0], ISO_values[0]]
+    partial_vals = [SOC_values[1], ISO_values[1]]
+    not_done_vals = [SOC_values[2], ISO_values[2]]
+
+    completed_and_partial = []
+    for completed_val, partial_val in zip(completed_vals, partial_vals):
+        completed_and_partial.append(completed_val + partial_val)
+
+    totals = []
+    for value, not_done_val in zip(completed_and_partial, not_done_vals):
+        totals.append(value + not_done_val)
+    N = len(labels)
+
+    ind = np.arange(N)    # the x locations for the groups
+    width = 0.1       # the width of the bars: can also be len(x) sequence
+
+    p1 = plt.bar(ind, completed_vals, width, align='center')
+    p2 = plt.bar(ind, partial_vals, width,
+                 bottom=completed_vals, color='#f59542', align='center')
+    p3 = plt.bar(ind, not_done_vals, width,
+              bottom=completed_and_partial, color='#f5424e', align='center')
+
+    print(max(totals))
+    plt.ylabel('Number of controls')
+    plt.title('Completed controls by framework')
+    plt.xticks(ind, ['SOC to ISO', 'ISO to SOC'])
+    plt.yticks(np.arange(0, max(totals)+50, 10))
+    plt.legend((p1[0], p2[0], p3[0]), ["Completed", "Partial", "Not Done"])
+
+    plt.show()
 
 def main():
-    file = "testcsv1.csv"
+    file = "mycsv.csv"
     info = parse_csv(file)
 
     info.pop(0) # get rid of header
@@ -73,20 +102,13 @@ def main():
         add_to_framework_dict(ET_id, SOC_control, SOC)
         add_to_framework_dict(ET_id, ISO_control, ISO)
 
-    # someset = set()
-    # for i,v in ISO.iteritems():
-    #     someset.add(i)
-    #     # if len(v) > 1:
-    #     print(i)
-    #     # print(v)
-    # print(len(someset))
-
     print("~~~~~~~~~~~~")
     print("SOC2 -> ISO")
     compare_framework_ETs(SOC, ISO)
     print("~~~~~~~~~~~~")
     print("ISO -> SOC2")
     compare_framework_ETs(ISO, SOC)
+    create_visuals(get_framework_ETs(SOC, ISO), get_framework_ETs(ISO,SOC))
 
 if __name__ == "__main__":
     main()
