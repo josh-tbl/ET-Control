@@ -6,7 +6,7 @@ import csv
 import matplotlib.pyplot as plt
 import numpy as np
 
-# NOTE:  some may be duplicates.
+
 def parse_csv(filename):
     info = []
     with open(filename, 'rb') as f:
@@ -52,7 +52,7 @@ def compare_framework_ETs(fw1, fw2):
     completed, partial, not_done = get_framework_ETs(fw1, fw2)
     print("Completed controls: {0}".format(completed))
     print("Partially Completed controls: {0}".format(partial))
-    print("Controls with no ETs: {0}".format(not_done))
+    print("Controls with unique ETs: {0}".format(not_done))
 
 
 def create_visuals(SOC_values, ISO_values):
@@ -71,7 +71,7 @@ def create_visuals(SOC_values, ISO_values):
     N = len(labels)
 
     ind = np.arange(N)    # the x locations for the groups
-    width = 0.1       # the width of the bars: can also be len(x) sequence
+    width = 0.3       # the width of the bars: can also be len(x) sequence
 
     p1 = plt.bar(ind, completed_vals, width, align='center')
     p2 = plt.bar(ind, partial_vals, width,
@@ -79,23 +79,23 @@ def create_visuals(SOC_values, ISO_values):
     p3 = plt.bar(ind, not_done_vals, width,
               bottom=completed_and_partial, color='#f5424e', align='center')
 
-    print(max(totals))
     plt.ylabel('Number of controls')
     plt.title('Completed controls by framework')
     plt.xticks(ind, ['SOC to ISO', 'ISO to SOC'])
     plt.yticks(np.arange(0, max(totals)+50, 10))
-    plt.legend((p1[0], p2[0], p3[0]), ["Completed", "Partial", "Not Done"])
+    plt.legend((p1[0], p2[0], p3[0]), ["Completed", "Partial", "Unimplemented"])
 
     plt.show()
 
+
 def main():
     file = "mycsv.csv"
-    info = parse_csv(file)
+    data = parse_csv(file)
 
-    info.pop(0) # get rid of header
+    data.pop(0) # get rid of header
     SOC = {}
     ISO = {}
-    for row in info:
+    for row in data:
         ET_id = row[0]
         SOC_control = row[4]
         ISO_control = row[5]
@@ -110,12 +110,6 @@ def main():
     compare_framework_ETs(ISO, SOC)
     create_visuals(get_framework_ETs(SOC, ISO), get_framework_ETs(ISO,SOC))
 
+
 if __name__ == "__main__":
     main()
-# Find duplicates
-# for i,v in SOC.iteritems():
-#     if len(v) > 1:
-#         print(i)
-#         print(v)
-
-# print(SOC)
