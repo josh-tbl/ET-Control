@@ -1,4 +1,4 @@
-# Used to extract info from some csvs n stuff
+# Used to examine relationships between 
 # Made by Lucas Ramos-Strankman for TugboatLogic
 # Jan 2021
 
@@ -83,8 +83,10 @@ def create_visuals(SOC_values, ISO_values):
     plt.title('Completed controls by framework')
     plt.xticks(ind, ['SOC to ISO', 'ISO to SOC'])
     plt.yticks(np.arange(0, max(totals)+50, 10))
-    plt.legend((p1[0], p2[0], p3[0]), ["Completed", "Partial", "Unimplemented"])
+    plt.legend((p1[0], p2[0], p3[0]), ["Completed", "Partial", "Unimplemented"],
+        loc='upper center', ncol=3)
 
+    plt.savefig("figure1.png")
     plt.show()
 
 
