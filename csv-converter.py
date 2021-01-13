@@ -91,7 +91,7 @@ def create_visuals(SOC_values, ISO_values):
 
 
 def main():
-    file = "mycsv.csv"
+    file = "mycsv2.csv"
     data = parse_csv(file)
 
     data.pop(0) # get rid of header
