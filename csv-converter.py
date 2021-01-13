@@ -81,7 +81,7 @@ def create_visuals(SOC_values, ISO_values):
 
     plt.ylabel('Number of controls')
     plt.title('Collected controls by framework')
-    plt.xticks(ind, ['SOC to ISO', 'ISO to SOC'])x
+    plt.xticks(ind, ['SOC to ISO', 'ISO to SOC'])
     plt.yticks(np.arange(0, max(totals)+50, 10))
     plt.legend((p1[0], p2[0], p3[0]), ["Collected", "Partially Collected", "Outstanding"],
         loc='upper center', ncol=3)
