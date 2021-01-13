@@ -5,7 +5,7 @@
 import csv
 import matplotlib.pyplot as plt
 import numpy as np
-
+import sys
 
 def parse_csv(filename):
     info = []
@@ -55,7 +55,7 @@ def compare_framework_ETs(fw1, fw2):
     print("Controls with unique ETs: {0}".format(not_done))
 
 
-def create_visuals(SOC_values, ISO_values):
+def create_stacked_bar(SOC_values, ISO_values):
     labels = ['SOC', 'ISO']
     completed_vals = [SOC_values[0], ISO_values[0]]
     partial_vals = [SOC_values[1], ISO_values[1]]
@@ -81,7 +81,7 @@ def create_visuals(SOC_values, ISO_values):
 
     plt.ylabel('Number of controls')
     plt.title('Collected controls by framework')
-    plt.xticks(ind, ['SOC to ISO', 'ISO to SOC'])x
+    plt.xticks(ind, ['SOC to ISO', 'ISO to SOC'])
     plt.yticks(np.arange(0, max(totals)+50, 10))
     plt.legend((p1[0], p2[0], p3[0]), ["Collected", "Partially Collected", "Outstanding"],
         loc='upper center', ncol=3)
@@ -90,27 +90,55 @@ def create_visuals(SOC_values, ISO_values):
     plt.show()
 
 
+def manage_header(header):
+    if len(header) < 6:
+        print("Csv not in expected form, expected at least 6 columns, only found {0}. See README for more detail".
+            format(len(header)))
+        sys.exit()
+
+    return header[4:] # These are the names of the included frameworks
+
+
+
 def main():
-    file = "mycsv.csv"
+    file = "mycsv2.csv"
     data = parse_csv(file)
 
-    data.pop(0) # get rid of header
-    SOC = {}
-    ISO = {}
-    for row in data:
-        ET_id = row[0]
-        SOC_control = row[4]
-        ISO_control = row[5]
-        add_to_framework_dict(ET_id, SOC_control, SOC)
-        add_to_framework_dict(ET_id, ISO_control, ISO)
+    frameworks = manage_header(data.pop(0)) # Popped so the header row is removed
+
+    framework_dicts = []
+    for i in range(len(frameworks)):
+        new_framework_dict = {'label':frameworks[i]}
+        print(frameworks[i])
+        framework_dicts.append(new_framework_dict)
+        for row in data:
+            ET_id = row[0]
+            control = row[4+i]
+            add_to_framework_dict(ET_id, control, new_framework_dict)
+
+    # SOC = {}
+    # ISO = {}
+    # for row in data:
+    #     ET_id = row[0]
+    #     SOC_control = row[4]
+    #     ISO_control = row[5]
+    #     add_to_framework_dict(ET_id, SOC_control, SOC)
+    #     add_to_framework_dict(ET_id, ISO_control, ISO)
 
     print("~~~~~~~~~~~~")
     print("SOC2 -> ISO")
-    compare_framework_ETs(SOC, ISO)
+    compare_framework_ETs(framework_dicts[0], framework_dicts[1])
     print("~~~~~~~~~~~~")
     print("ISO -> SOC2")
-    compare_framework_ETs(ISO, SOC)
-    create_visuals(get_framework_ETs(SOC, ISO), get_framework_ETs(ISO,SOC))
+    compare_framework_ETs(framework_dicts[1], framework_dicts[0])
+    create_stacked_bar(get_framework_ETs(framework_dicts[0], framework_dicts[1]), get_framework_ETs(framework_dicts[1],framework_dicts[0]))
+    # print("~~~~~~~~~~~~")
+    # print("SOC2 -> ISO")
+    # compare_framework_ETs(SOC, ISO)
+    # print("~~~~~~~~~~~~")
+    # print("ISO -> SOC2")
+    # compare_framework_ETs(ISO, SOC)
+    # create_stacked_bar(get_framework_ETs(SOC, ISO), get_framework_ETs(ISO,SOC))
 
 
 if __name__ == "__main__":
