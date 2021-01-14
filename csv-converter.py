@@ -39,6 +39,8 @@ def get_framework_ETs(fw1, fw2):
     partial = []
     not_done = []
     for control, control_ET_list in fw2.iteritems():
+        if control == 'label': # ignores the framework name that is added to the dictionary
+            continue
         if all(ET_id in fw1_ET_list for ET_id in control_ET_list):
             completed.append(control)
         elif any(ET_id in fw1_ET_list for ET_id in control_ET_list):
@@ -55,11 +57,11 @@ def compare_framework_ETs(fw1, fw2):
     print("Controls with unique ETs: {0}".format(not_done))
 
 
-def create_stacked_bar(SOC_values, ISO_values):
-    labels = ['SOC', 'ISO']
-    completed_vals = [SOC_values[0], ISO_values[0]]
-    partial_vals = [SOC_values[1], ISO_values[1]]
-    not_done_vals = [SOC_values[2], ISO_values[2]]
+def create_stacked_bar(fw1_dict, fw2_dict):
+    fw1_values, fw2_values = get_framework_ETs(fw1_dict, fw2_dict), get_framework_ETs(fw2_dict,fw1_dict)
+    completed_vals = [fw1_values[0], fw2_values[0]]
+    partial_vals = [fw1_values[1], fw2_values[1]]
+    not_done_vals = [fw1_values[2], fw2_values[2]]
 
     completed_and_partial = []
     for completed_val, partial_val in zip(completed_vals, partial_vals):
@@ -68,7 +70,7 @@ def create_stacked_bar(SOC_values, ISO_values):
     totals = []
     for value, not_done_val in zip(completed_and_partial, not_done_vals):
         totals.append(value + not_done_val)
-    N = len(labels)
+    N = 2
 
     ind = np.arange(N)    # the x locations for the groups
     width = 0.3       # the width of the bars: can also be len(x) sequence
@@ -81,7 +83,7 @@ def create_stacked_bar(SOC_values, ISO_values):
 
     plt.ylabel('Number of controls')
     plt.title('Collected controls by framework')
-    plt.xticks(ind, ['SOC to ISO', 'ISO to SOC'])
+    plt.xticks(ind, ['{0} to {1}'.format(fw1_dict.get('label'),fw2_dict.get('label')), '{0} to {1}'.format(fw1_dict.get('label'), fw2_dict.get('label')) ])
     plt.yticks(np.arange(0, max(totals)+50, 10))
     plt.legend((p1[0], p2[0], p3[0]), ["Collected", "Partially Collected", "Outstanding"],
         loc='upper center', ncol=3)
@@ -104,41 +106,25 @@ def main():
     file = "mycsv2.csv"
     data = parse_csv(file)
 
-    frameworks = manage_header(data.pop(0)) # Popped so the header row is removed
+    framework_labels = manage_header(data.pop(0)) # Popped so the header row is removed
 
-    framework_dicts = []
-    for i in range(len(frameworks)):
-        new_framework_dict = {'label':frameworks[i]}
-        print(frameworks[i])
-        framework_dicts.append(new_framework_dict)
+    fw_dicts = []
+    for i in range(len(framework_labels)):
+        new_framework_dict = {'label':framework_labels[i]}
+        fw_dicts.append(new_framework_dict)
         for row in data:
             ET_id = row[0]
             control = row[4+i]
             add_to_framework_dict(ET_id, control, new_framework_dict)
 
-    # SOC = {}
-    # ISO = {}
-    # for row in data:
-    #     ET_id = row[0]
-    #     SOC_control = row[4]
-    #     ISO_control = row[5]
-    #     add_to_framework_dict(ET_id, SOC_control, SOC)
-    #     add_to_framework_dict(ET_id, ISO_control, ISO)
 
     print("~~~~~~~~~~~~")
-    print("SOC2 -> ISO")
-    compare_framework_ETs(framework_dicts[0], framework_dicts[1])
+    print("{0} -> {1}".format(framework_labels[0], framework_labels[1]))
+    compare_framework_ETs(fw_dicts[0], fw_dicts[1])
     print("~~~~~~~~~~~~")
-    print("ISO -> SOC2")
-    compare_framework_ETs(framework_dicts[1], framework_dicts[0])
-    create_stacked_bar(get_framework_ETs(framework_dicts[0], framework_dicts[1]), get_framework_ETs(framework_dicts[1],framework_dicts[0]))
-    # print("~~~~~~~~~~~~")
-    # print("SOC2 -> ISO")
-    # compare_framework_ETs(SOC, ISO)
-    # print("~~~~~~~~~~~~")
-    # print("ISO -> SOC2")
-    # compare_framework_ETs(ISO, SOC)
-    # create_stacked_bar(get_framework_ETs(SOC, ISO), get_framework_ETs(ISO,SOC))
+    print("{0} -> {1}".format(framework_labels[1], framework_labels[0]))
+    compare_framework_ETs(fw_dicts[1], fw_dicts[0])
+    create_stacked_bar(fw_dicts[0], fw_dicts[1])
 
 
 if __name__ == "__main__":
