@@ -1,6 +1,16 @@
-# Used to examine relationships between
+# Used to examine shared ETs between frameworks
 # Made by Lucas Ramos-Strankman for TugboatLogic
 # Jan 2021
+
+# Code was designed to be used from the commandline
+
+# Overview of how it works:
+# After reading the csv in, we create dictionaries for each framework
+# The control name is used as a key, and leads to a list of evidence task ids
+# Each control is then mapped to a list of ET ids that it requires
+# Using these dictionaries, we can make lists of "implemented" ETs
+# and see how many controls of another framework are satisfied by this list
+# Finally, we can plot this information using matplotlib
 
 import csv
 import matplotlib.pyplot as plt
@@ -47,21 +57,22 @@ def get_framework_ETs(fw1, fw2):
             partial.append(control)
         else:
             not_done.append(control)
-    return len(completed), len(partial), len(not_done)
+    return completed, partial, not_done
 
 
 def compare_framework_ETs(fw1, fw2):
     completed, partial, not_done = get_framework_ETs(fw1, fw2)
-    print("Completed controls: {0}".format(completed))
-    print("Partially Completed controls: {0}".format(partial))
-    print("Controls with unique ETs: {0}".format(not_done))
+    print("Completed controls: {0}".format(len(completed)))
+    print("Partially Completed controls: {0}".format(len(partial)))
+    print("Controls with unique ETs: {0}".format(len(not_done)))
 
 
 def create_stacked_bar(fw1_dict, fw2_dict):
-    fw1_values, fw2_values = get_framework_ETs(fw1_dict, fw2_dict), get_framework_ETs(fw2_dict,fw1_dict)
-    completed_vals = [fw1_values[0], fw2_values[0]]
-    partial_vals = [fw1_values[1], fw2_values[1]]
-    not_done_vals = [fw1_values[2], fw2_values[2]]
+    fw1_controls = get_framework_ETs(fw1_dict, fw2_dict)
+    fw2_controls = get_framework_ETs(fw2_dict,fw1_dict)
+    completed_vals = [len(fw1_controls[0]), len(fw2_controls[0])]
+    partial_vals = [len(fw1_controls[1]), len(fw2_controls[1])]
+    not_done_vals = [len(fw1_controls[2]), len(fw2_controls[2])]
 
     completed_and_partial = []
     for completed_val, partial_val in zip(completed_vals, partial_vals):
@@ -71,7 +82,6 @@ def create_stacked_bar(fw1_dict, fw2_dict):
     for value, not_done_val in zip(completed_and_partial, not_done_vals):
         totals.append(value + not_done_val)
     N = 2
-
     ind = np.arange(N)    # the x locations for the groups
     width = 0.3       # the width of the bars: can also be len(x) sequence
 
@@ -83,12 +93,10 @@ def create_stacked_bar(fw1_dict, fw2_dict):
 
     plt.ylabel('Number of controls')
     plt.title('Collected controls by framework')
-
     plt.xticks(ind, ['{0} to {1}'.format(fw1_dict.get('label'),fw2_dict.get('label')), '{0} to {1}'.format(fw1_dict.get('label'), fw2_dict.get('label')) ])
     plt.yticks(np.arange(0, max(totals)+50, 10))
     plt.legend((p1[0], p2[0], p3[0]), ["Collected", "Partially Collected", "Outstanding"],
         loc='upper center', ncol=3)
-
     plt.savefig("figure1.png")
     plt.show()
 
