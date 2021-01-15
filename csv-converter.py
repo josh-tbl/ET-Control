@@ -45,51 +45,56 @@ def get_framework_ETs(fw1, fw2):
         for ET_id in control_ET_list:
             fw1_ET_list.add(ET_id)
 
-    completed = []
+    collected = []
     partial = []
-    not_done = []
+    outstanding = []
     for control, control_ET_list in fw2.iteritems():
         if control == 'label': # ignores the framework name that is added to the dictionary
             continue
         if all(ET_id in fw1_ET_list for ET_id in control_ET_list):
-            completed.append(control)
+            collected.append(control)
         elif any(ET_id in fw1_ET_list for ET_id in control_ET_list):
             partial.append(control)
         else:
-            not_done.append(control)
-    return completed, partial, not_done
+            outstanding.append(control)
+    return collected, partial, outstanding
+
+
+# def output_to_file(collected, partial, outstanding):
+
 
 
 def compare_framework_ETs(fw1, fw2):
-    completed, partial, not_done = get_framework_ETs(fw1, fw2)
-    print("Completed controls: {0}".format(len(completed)))
-    print("Partially Completed controls: {0}".format(len(partial)))
-    print("Controls with unique ETs: {0}".format(len(not_done)))
+    collected, partial, outstanding = get_framework_ETs(fw1, fw2)
+    print("collected controls: {0}".format(len(collected)))
+    print("Partially collected controls: {0}".format(len(partial)))
+    print("Controls with unique ETs: {0}".format(len(outstanding)))
+
 
 
 def create_stacked_bar(fw1_dict, fw2_dict):
     fw1_controls = get_framework_ETs(fw1_dict, fw2_dict)
     fw2_controls = get_framework_ETs(fw2_dict,fw1_dict)
-    completed_vals = [len(fw1_controls[0]), len(fw2_controls[0])]
+    collected_vals = [len(fw1_controls[0]), len(fw2_controls[0])]
     partial_vals = [len(fw1_controls[1]), len(fw2_controls[1])]
-    not_done_vals = [len(fw1_controls[2]), len(fw2_controls[2])]
+    outstanding_vals = [len(fw1_controls[2]), len(fw2_controls[2])]
 
-    completed_and_partial = []
-    for completed_val, partial_val in zip(completed_vals, partial_vals):
-        completed_and_partial.append(completed_val + partial_val)
+    collected_and_partial = []
+    for collected_val, partial_val in zip(collected_vals, partial_vals):
+        collected_and_partial.append(collected_val + partial_val)
 
     totals = []
-    for value, not_done_val in zip(completed_and_partial, not_done_vals):
-        totals.append(value + not_done_val)
+    for value, outstanding_val in zip(collected_and_partial, outstanding_vals):
+        totals.append(value + outstanding_val)
     N = 2
     ind = np.arange(N)    # the x locations for the groups
     width = 0.3       # the width of the bars: can also be len(x) sequence
 
-    p1 = plt.bar(ind, completed_vals, width, align='center')
+    p1 = plt.bar(ind, collected_vals, width, align='center')
     p2 = plt.bar(ind, partial_vals, width,
-                 bottom=completed_vals, color='#f59542', align='center')
-    p3 = plt.bar(ind, not_done_vals, width,
-              bottom=completed_and_partial, color='#f5424e', align='center')
+                 bottom=collected_vals, color='#f59542', align='center')
+    p3 = plt.bar(ind, outstanding_vals, width,
+              bottom=collected_and_partial, color='#f5424e', align='center')
 
     plt.ylabel('Number of controls')
     plt.title('Collected controls by framework')
@@ -112,6 +117,8 @@ def manage_header(header):
 
 # Assumes group_codes are separated by a '\n'
 def contains_TSC(group_codes, check_code):
+    if check_code == "": # If no code, then just accept it
+        return True
     codes = group_codes.split("\n")
     if check_code in codes:
         return True
@@ -129,10 +136,10 @@ def main():
         new_framework_dict = {'label':framework_labels[i]}
         fw_dicts.append(new_framework_dict)
         for row in data:
-            # if contains_TSC(row[3], "CC"):
-            ET_id = row[0]
-            control = row[4+i]
-            add_to_framework_dict(ET_id, control, new_framework_dict)
+            if contains_TSC(row[3], "CC"):
+                ET_id = row[0]
+                control = row[4+i]
+                add_to_framework_dict(ET_id, control, new_framework_dict)
 
 
     print("~~~~~~~~~~~~")
