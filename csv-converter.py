@@ -60,12 +60,27 @@ def get_framework_ETs(fw1, fw2):
     return collected, partial, outstanding
 
 
-# def output_to_file(collected, partial, outstanding):
+def output_to_file(collected, partial, outstanding):
+    file = open("Control_breakdown.txt", "w")
 
+    file.write("Collected Controls:\n")
+    for control in collected:
+        file.write(control + "\n")
 
+    file.write("\n")
+    file.write("Partially Collected Controls:\n")
+    for control in partial:
+        file.write(control + "\n")
+
+    file.write("\n")
+    file.write("Outstanding Controls:\n")
+    for control in outstanding:
+        file.write(control + "\n")
+    file.close()
 
 def compare_framework_ETs(fw1, fw2):
     collected, partial, outstanding = get_framework_ETs(fw1, fw2)
+    output_to_file(collected, partial, outstanding)
     print("collected controls: {0}".format(len(collected)))
     print("Partially collected controls: {0}".format(len(partial)))
     print("Controls with unique ETs: {0}".format(len(outstanding)))
