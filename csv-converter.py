@@ -93,7 +93,7 @@ def create_stacked_bar(fw1_dict, fw2_dict):
 
     plt.ylabel('Number of controls')
     plt.title('Collected controls by framework')
-    plt.xticks(ind, ['{0} to {1}'.format(fw1_dict.get('label'),fw2_dict.get('label')), '{0} to {1}'.format(fw1_dict.get('label'), fw2_dict.get('label')) ])
+    plt.xticks(ind, ['{0} to {1}'.format(fw1_dict.get('label'),fw2_dict.get('label')), '{0} to {1}'.format(fw2_dict.get('label'), fw1_dict.get('label')) ])
     plt.yticks(np.arange(0, max(totals)+50, 10))
     plt.legend((p1[0], p2[0], p3[0]), ["Collected", "Partially Collected", "Outstanding"],
         loc='upper center', ncol=3)
@@ -110,9 +110,16 @@ def manage_header(header):
     return header[4:] # These are the names of the included frameworks
 
 
+# Assumes group_codes are separated by a '\n'
+def contains_TSC(group_codes, check_code):
+    codes = group_codes.split("\n")
+    if check_code in codes:
+        return True
+    return False
+
 
 def main():
-    file = "mycsv2.csv"
+    file = "csv_with.csv"
     data = parse_csv(file)
 
     framework_labels = manage_header(data.pop(0)) # Popped so the header row is removed
@@ -122,6 +129,7 @@ def main():
         new_framework_dict = {'label':framework_labels[i]}
         fw_dicts.append(new_framework_dict)
         for row in data:
+            # if contains_TSC(row[3], "CC"):
             ET_id = row[0]
             control = row[4+i]
             add_to_framework_dict(ET_id, control, new_framework_dict)
