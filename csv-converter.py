@@ -3,6 +3,7 @@
 # Jan 2021
 
 # Code was designed to be used from the commandline
+# Developed for Python 2.7 as that comes stock in Mac
 
 # Overview of how it works:
 # After reading the csv in, we create dictionaries for each framework
@@ -16,6 +17,7 @@ import csv
 import matplotlib.pyplot as plt
 import numpy as np
 import sys
+
 
 def parse_csv(filename):
     info = []
@@ -39,21 +41,25 @@ def add_to_framework_dict(ET_id, control, framework):
             framework[control] = [ET_id]
 
 
-def get_framework_ETs(fw1, fw2):
-    fw1_ET_list = set()
-    for control, control_ET_list in fw1.iteritems():
-        for ET_id in control_ET_list:
-            fw1_ET_list.add(ET_id)
+def find_implemented_ETs(framework_list):
+    ET_set = set()
+    for framework in framework_list:
+        for control, control_ET_list in framework.iteritems():
+            for ET_id in control_ET_list:
+                ET_set.add(ET_id)
+    return sorted(ET_set) # Returns a list of the ETs included in our frameworks
 
+
+def get_framework_ETs(implemented_ETs, fw2):
     collected = []
     partial = []
     outstanding = []
     for control, control_ET_list in fw2.iteritems():
         if control == 'label': # ignores the framework name that is added to the dictionary
             continue
-        if all(ET_id in fw1_ET_list for ET_id in control_ET_list):
+        if all(ET_id in implemented_ETs for ET_id in control_ET_list):
             collected.append(control)
-        elif any(ET_id in fw1_ET_list for ET_id in control_ET_list):
+        elif any(ET_id in implemented_ETs for ET_id in control_ET_list):
             partial.append(control)
         else:
             outstanding.append(control)
@@ -78,8 +84,10 @@ def output_to_file(collected, partial, outstanding):
         file.write(control + "\n")
     file.close()
 
-def compare_framework_ETs(fw1, fw2):
-    collected, partial, outstanding = get_framework_ETs(fw1, fw2)
+
+def compare_framework_ETs(framework_list, fw2):
+    implemented_ETs = find_implemented_ETs(framework_list)
+    collected, partial, outstanding = get_framework_ETs(implemented_ETs, fw2)
     output_to_file(collected, partial, outstanding)
     print("collected controls: {0}".format(len(collected)))
     print("Partially collected controls: {0}".format(len(partial)))
@@ -87,12 +95,13 @@ def compare_framework_ETs(fw1, fw2):
 
 
 
-def create_stacked_bar(fw1_dict, fw2_dict):
-    fw1_controls = get_framework_ETs(fw1_dict, fw2_dict)
-    fw2_controls = get_framework_ETs(fw2_dict,fw1_dict)
-    collected_vals = [len(fw1_controls[0]), len(fw2_controls[0])]
-    partial_vals = [len(fw1_controls[1]), len(fw2_controls[1])]
-    outstanding_vals = [len(fw1_controls[2]), len(fw2_controls[2])]
+def create_stacked_bar(framework_list, fw1_dict):
+    implemented_ETs = find_implemented_ETs(framework_list)
+    fw1_controls = get_framework_ETs(implemented_ETs, fw1_dict)
+    # fw2_controls = get_framework_ETs(fw2_dict,fw1_dict)
+    collected_vals = [len(fw1_controls[0])]
+    partial_vals = [len(fw1_controls[1])]
+    outstanding_vals = [len(fw1_controls[2])]
 
     collected_and_partial = []
     for collected_val, partial_val in zip(collected_vals, partial_vals):
@@ -101,7 +110,7 @@ def create_stacked_bar(fw1_dict, fw2_dict):
     totals = []
     for value, outstanding_val in zip(collected_and_partial, outstanding_vals):
         totals.append(value + outstanding_val)
-    N = 2
+    N = 1
     ind = np.arange(N)    # the x locations for the groups
     width = 0.3       # the width of the bars: can also be len(x) sequence
 
@@ -113,7 +122,8 @@ def create_stacked_bar(fw1_dict, fw2_dict):
 
     plt.ylabel('Number of controls')
     plt.title('Collected controls by framework')
-    plt.xticks(ind, ['{0} to {1}'.format(fw1_dict.get('label'),fw2_dict.get('label')), '{0} to {1}'.format(fw2_dict.get('label'), fw1_dict.get('label')) ])
+    # plt.xticks(ind, ['{0} to {1}'.format(fw1_dict.get('label'),fw2_dict.get('label')), '{0} to {1}'.format(fw2_dict.get('label'), fw1_dict.get('label')) ])
+    plt.xticks(ind, ['{0}'.format(fw1_dict.get('label'))])
     plt.yticks(np.arange(0, max(totals)+50, 10))
     plt.legend((p1[0], p2[0], p3[0]), ["Collected", "Partially Collected", "Outstanding"],
         loc='upper center', ncol=3)
@@ -159,11 +169,11 @@ def main():
 
     print("~~~~~~~~~~~~")
     print("{0} -> {1}".format(framework_labels[0], framework_labels[1]))
-    compare_framework_ETs(fw_dicts[0], fw_dicts[1])
+    compare_framework_ETs([fw_dicts[0]], fw_dicts[1])
     print("~~~~~~~~~~~~")
     print("{0} -> {1}".format(framework_labels[1], framework_labels[0]))
-    compare_framework_ETs(fw_dicts[1], fw_dicts[0])
-    create_stacked_bar(fw_dicts[0], fw_dicts[1])
+    # compare_framework_ETs((fw_dicts[1]), fw_dicts[0])
+    create_stacked_bar([fw_dicts[1]], fw_dicts[0])
 
 
 if __name__ == "__main__":
