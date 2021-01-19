@@ -7,7 +7,7 @@ Developed for Python 2.7 as that comes stock in Mac
 Put both the script and your csv in a folder and run the script from the commandline
 
 
-Overview of how it works:
+## Overview of how it works:
 After reading the csv in, we create dictionaries for each framework.
 The control name is used as a key, and leads to a list of evidence task ids.
 Each control is then mapped to a list of ET ids that it requires.
