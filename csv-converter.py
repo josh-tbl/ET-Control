@@ -19,6 +19,8 @@ import numpy as np
 import sys
 
 
+# Takes a csv with the ET ids in the 1st column, and frameworks in the
+# 5th onward columns
 def parse_csv(filename):
     info = []
     with open(filename, 'rb') as f:
@@ -50,7 +52,7 @@ def find_implemented_ETs(framework_list):
     return sorted(ET_set) # Returns a list of the ETs included in our frameworks
 
 
-def get_framework_ETs(implemented_ETs, fw2):
+def control_implemented_status(implemented_ETs, fw2):
     collected = []
     partial = []
     outstanding = []
@@ -87,18 +89,60 @@ def output_to_file(collected, partial, outstanding):
 
 def compare_framework_ETs(framework_list, fw2):
     implemented_ETs = find_implemented_ETs(framework_list)
-    collected, partial, outstanding = get_framework_ETs(implemented_ETs, fw2)
+    collected, partial, outstanding = control_implemented_status(implemented_ETs, fw2)
     output_to_file(collected, partial, outstanding)
     print("collected controls: {0}".format(len(collected)))
     print("Partially collected controls: {0}".format(len(partial)))
     print("Controls with unique ETs: {0}".format(len(outstanding)))
 
 
+def dual_stacked_bar(fw1_dict, fw2_dict):
+    fw1_implemented_ETs = find_implemented_ETs([fw1_dict])
+    fw2_implemented_ETs = find_implemented_ETs([fw2_dict])
 
-def create_stacked_bar(framework_list, fw1_dict):
+    fw1_values = control_implemented_status(fw1_implemented_ETs, fw2_dict)
+    fw2_values = control_implemented_status(fw2_implemented_ETs, fw1_dict)
+    collected_vals = [len(fw1_values[0]), len(fw2_values[0])]
+    partial_vals = [len(fw1_values[1]), len(fw2_values[1])]
+    outstanding_vals = [len(fw1_values[2]), len(fw2_values[2])]
+
+    collected_and_partial = []
+    for collected_val, partial_val in zip(collected_vals, partial_vals):
+        collected_and_partial.append(collected_val + partial_val)
+
+    totals = []
+    for value, outstanding_val in zip(collected_and_partial, outstanding_vals):
+        totals.append(value + outstanding_val)
+    N = 2
+
+    ind = np.arange(N)    # the x locations for the groups
+    width = 0.3
+
+    p1 = plt.bar(ind, collected_vals, width, align='center')
+    p2 = plt.bar(ind, partial_vals, width,
+                 bottom=collected_vals, color='#f59542', align='center')
+    p3 = plt.bar(ind, outstanding_vals, width,
+              bottom=collected_and_partial, color='#f5424e', align='center')
+
+    fw1_label = fw1_dict.get('label')
+    fw2_label = fw2_dict.get('label')
+    plt.ylabel('Number of controls')
+    plt.title('Collected controls by framework')
+
+    plt.xticks(ind, ['{0} to {1}'.format(fw1_label, fw2_label),
+        '{0} to {1}'.format(fw2_label, fw1_label) ])
+    plt.yticks(np.arange(0, max(totals)+50, 10))
+    plt.legend((p1[0], p2[0], p3[0]), ["Collected", "Partially Collected", "Outstanding"],
+        loc='upper center', ncol=3)
+
+    plt.savefig("figure1.png")
+    plt.show()
+
+
+def single_stacked_bar(framework_list, fw1_dict):
     implemented_ETs = find_implemented_ETs(framework_list)
-    fw1_controls = get_framework_ETs(implemented_ETs, fw1_dict)
-    # fw2_controls = get_framework_ETs(fw2_dict,fw1_dict)
+    fw1_controls = control_implemented_status(implemented_ETs, fw1_dict)
+    # fw2_controls = control_implemented_status(fw2_dict,fw1_dict)
     collected_vals = [len(fw1_controls[0])]
     partial_vals = [len(fw1_controls[1])]
     outstanding_vals = [len(fw1_controls[2])]
@@ -112,21 +156,24 @@ def create_stacked_bar(framework_list, fw1_dict):
         totals.append(value + outstanding_val)
     N = 1
     ind = np.arange(N)    # the x locations for the groups
-    width = 0.3       # the width of the bars: can also be len(x) sequence
+    width = 0.1       # the width of the bars: can also be len(x) sequence
 
+    # collected_vals.append(0)
     p1 = plt.bar(ind, collected_vals, width, align='center')
-    p2 = plt.bar(ind, partial_vals, width,
-                 bottom=collected_vals, color='#f59542', align='center')
-    p3 = plt.bar(ind, outstanding_vals, width,
-              bottom=collected_and_partial, color='#f5424e', align='center')
+    # p2 = plt.bar(ind, partial_vals, width,
+    #              bottom=collected_vals, color='#f59542', align='center')
+    # p3 = plt.bar(ind, outstanding_vals, width,
+    #           bottom=collected_and_partial, color='#f5424e', align='center')
 
+    # plt.axis('')
     plt.ylabel('Number of controls')
     plt.title('Collected controls by framework')
     # plt.xticks(ind, ['{0} to {1}'.format(fw1_dict.get('label'),fw2_dict.get('label')), '{0} to {1}'.format(fw2_dict.get('label'), fw1_dict.get('label')) ])
-    plt.xticks(ind, ['{0}'.format(fw1_dict.get('label'))])
+    # plt.xticks(ind, ['{0}'.format(fw1_dict.get('label'))])
+    plt.xticks([5])
     plt.yticks(np.arange(0, max(totals)+50, 10))
-    plt.legend((p1[0], p2[0], p3[0]), ["Collected", "Partially Collected", "Outstanding"],
-        loc='upper center', ncol=3)
+    # plt.legend((p1[0], p2[0], p3[0]), ["Collected", "Partially Collected", "Outstanding"],
+        # loc='upper center', ncol=3)
     plt.savefig("figure1.png")
     plt.show()
 
@@ -161,7 +208,7 @@ def main():
         new_framework_dict = {'label':framework_labels[i]}
         fw_dicts.append(new_framework_dict)
         for row in data:
-            if contains_TSC(row[3], "CC"):
+            if contains_TSC(row[3], ""):
                 ET_id = row[0]
                 control = row[4+i]
                 add_to_framework_dict(ET_id, control, new_framework_dict)
@@ -172,8 +219,8 @@ def main():
     compare_framework_ETs([fw_dicts[0]], fw_dicts[1])
     print("~~~~~~~~~~~~")
     print("{0} -> {1}".format(framework_labels[1], framework_labels[0]))
-    # compare_framework_ETs((fw_dicts[1]), fw_dicts[0])
-    create_stacked_bar([fw_dicts[1]], fw_dicts[0])
+    compare_framework_ETs([fw_dicts[1]], fw_dicts[0])
+    dual_stacked_bar(fw_dicts[0], fw_dicts[1])
 
 
 if __name__ == "__main__":
