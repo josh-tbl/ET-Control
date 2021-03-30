@@ -127,8 +127,8 @@ def control_implemented_status(implemented_ETs, fw2):
     return collected, partial, outstanding
 
 
-def output_to_file(collected, partial, outstanding):
-    file = open("Control_breakdown.txt", "w")
+def output_to_file(collected, partial, outstanding, framework):
+    file = open(framework.replace(" ", "_") + "_Control_breakdown.txt", "w")
 
     file.write("Collected Controls:\n")
     for control in collected:
@@ -149,7 +149,7 @@ def output_to_file(collected, partial, outstanding):
 def compare_framework_ETs(framework_list, fw2):
     implemented_ETs = find_implemented_ETs(framework_list)
     collected, partial, outstanding = control_implemented_status(implemented_ETs, fw2)
-    output_to_file(collected, partial, outstanding) #outputs the results to a txt file
+    output_to_file(collected, partial, outstanding, fw2["label"]) #outputs the results to a txt file
     col_num = len(collected)
     par_num = len(partial)
     out_num = len(outstanding)
@@ -240,7 +240,7 @@ def single_stacked_bar(framework_list, fw1_dict):
     plt.legend((p1[0], p2[0], p3[0]), ["Collected", "Partially Collected", "Outstanding"],
         loc='upper center', ncol=3)
     plt.subplots_adjust(left=0.05, right=0.95) # widen plot so legend fits
-    plt.savefig("figure1.png")
+    plt.savefig(fw1_dict["label"].replace(" ", "_") + "_Graph.png")
     # plt.show()
 
 
@@ -267,22 +267,52 @@ def main():
     f = create_dict_of_frameworks('controls_export.csv')
     fill_frameworks_with_ets('TugbotLogic-Evidence-Tasks.csv', f)
 
-    ### implemented
-    label1 = "NIST CSF"
-    ## investigating
-    label2 = "ISO 27001:2013"
+    argv = sys.argv
+
+    investigating = []
+
+    ### Parse Command-line Args
+    try:
+        if (len(argv) > 4) and (argv[1] == "-i" and argv[3] == "-v"):
+            ### implemented
+            label1 = argv[2]
+            ### investigating
+            #label2 = argv[4]
+
+            for i in range(4, len(argv)):
+                investigating.append(argv[i])
+        else:
+            print "Invalid Syntax. Exiting..."
+            exit(0)
+    except IndexError:
+        print "Default frameworks will be used."
+        label1 = "NIST CSF"
+        investigating.insert(0, "ISO 27001:2013")
+
+    print "Implemented Framework: " + label1
+    print "Investigating Frameworks: "
+
+    s = []
 
     x = f[label1]
-    s = f[label2]
-
     x['label'] = label1
-    s['label'] = label2
 
     frameworks_list = []
     frameworks_list.append(x)
 
-    compare_framework_ETs(frameworks_list, s)
-    single_stacked_bar(frameworks_list, s)
+    for i in range(0, len(investigating)):
+        print investigating[i]
+        s.insert(i, f[investigating[i]])
+        s[i]['label'] = investigating[i]
+        compare_framework_ETs(frameworks_list, s[i])
+        single_stacked_bar(frameworks_list, s[i])
+        print "\n"
+    #s = f[label2]
+    #s['label'] = label2
+
+
+
+    
 
 
     # file = "csv_ET.csv"
