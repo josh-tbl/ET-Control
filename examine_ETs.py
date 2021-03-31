@@ -230,6 +230,22 @@ def single_stacked_bar(framework_list, fw1_dict):
     plt.savefig("figure1.png")
     # plt.show()
 
+# Creates a csv file that tables the relationship between an implemented framework
+def create_csv_table(implemented_framework_dict, framework_list):
+    implemented_name = implemented_framework_dict["label"]
+    with open(implemented_name + "_framework_overlap.csv", "w") as csvfile:
+        writer = csv.writer(csvfile)
+        writer.writerow(["Implemented "+ implemented_name, "Overlap"])
+
+        for investigated_framework in framework_list:
+            print(investigated_framework)
+            investigated_name = investigated_framework['label']
+            common_controls, partial, unique = control_implemented_status([implemented_framework_dict], investigated_framework)
+            overlap = float(len(common_controls))/(len(partial) + len(unique))*100
+            writer.writerow([investigated_name, "{:.0f}%".format(overlap)])
+
+
+
 
 # Assumes group_codes are separated by a '\n'
 def contains_TSC(group_codes, check_code):
@@ -246,21 +262,23 @@ def main():
     fill_frameworks_with_ets('TugbotLogic-Evidence-Tasks.csv', f)
 
     ### implemented
-    label1 = "NIST CSF"
+    label1 = "HIPAA"
     ## investigating
-    label2 = "ISO 27001:2013"
+    label2 = "SOC 2"
 
     x = f[label1]
     s = f[label2]
-
+    y = f["ISO 27001:2013"]
     x['label'] = label1
     s['label'] = label2
+    
 
     frameworks_list = []
     frameworks_list.append(x)
 
-    compare_framework_ETs(frameworks_list, s)
-    single_stacked_bar(frameworks_list, s)
+    create_csv_table(x,[s,y])
+    # compare_framework_ETs(frameworks_list, s)
+    # single_stacked_bar(frameworks_list, s)
 
 
 
