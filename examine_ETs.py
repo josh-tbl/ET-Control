@@ -160,7 +160,7 @@ def compare_framework_ETs(framework_list, fw2):
     print("Partially collected controls: {0}".format(par_num))
     print("Controls with unique ETs: {0}".format(out_num))
     print("Collected controls/rest = {}/{} = {:.2f}% ".format(col_num, all_num, float(col_num)/all_num*100 ))
-    
+
 
  # Shows a single bar representing control status based on
  # one or more already implemented frameworks
@@ -225,71 +225,39 @@ def contains_TSC(group_codes, check_code):
 
 
 def main():
-    f = create_dict_of_frameworks('controls_export.csv')
-    fill_frameworks_with_ets('TugbotLogic-Evidence-Tasks.csv', f)
-
-    argv = sys.argv
+    framework_dicts = create_dict_of_frameworks('controls_export.csv')
+    fill_frameworks_with_ets('TugbotLogic-Evidence-Tasks.csv', framework_dicts)
 
     # Parse Command-line Args
     parser = argparse.ArgumentParser(description='Compare an implemented framework with 1 or more investigated frameworks.')
-    parser.add_argument('-i', '--implemented', default="NIST CSF")
+    parser.add_argument('-i', '--implemented', default="SOC 2")
     parser.add_argument('-v', '--investigating', nargs='+', default=["ISO 27001:2013"])
     args = parser.parse_args()
 
     ### Implemented Framework
-    label1 = args.implemented
+    implemented_name = args.implemented
 
-    ### Investigating Frameworks
-    investigating = args.investigating
 
-    print "Implemented Framework: " + label1
+    investigating_names = args.investigating
+
+    print "Implemented Framework: " + implemented_name
     print "Investigating Frameworks... \n"
 
-    s = []
-
     try:
-        x = f[label1]
+        ### Implemented Framework
+        implemented_framework = framework_dicts[args.implemented]
+        implemented_framework['label'] = args.implemented
+
+        ### For each framework to investigate
+        for framework_name in args.investigating:
+            print(framework_name)
+            framework_dicts[framework_name]['label'] = framework_name
+            compare_framework_ETs([implemented_framework], framework_dicts[framework_name])
+            single_stacked_bar([implemented_framework], framework_dicts[framework_name])
+            print "\n"
     except KeyError:
-        sys.exit("Implemented Framework {} Does Not Exist".format(label1))
+        sys.exit("Implemented Framework {} Does Not Exist".format(implemented_name))
 
-    x['label'] = label1
-
-    frameworks_list = []
-    frameworks_list.append(x)
-
-    for i in range(0, len(investigating)):
-        print investigating[i]
-        try:
-            s.insert(i, f[investigating[i]])
-        except KeyError:
-            sys.exit("Framework {} Does Not Exist".format(investigating[i]))
-        s[i]['label'] = investigating[i]
-        compare_framework_ETs(frameworks_list, s[i])
-        single_stacked_bar(frameworks_list, s[i])
-        print "\n"
-
-    # file = "csv_ET.csv"
-    # data = parse_csv(file)
-    # framework_labels = manage_header(data.pop(0)) # Popped so the header row is removed
-    #
-    # fw_dicts = []
-    # for i in range(len(framework_labels)):
-    #     new_framework_dict = {'label':framework_labels[i]}
-    #     fw_dicts.append(new_framework_dict)
-    #     for row in data:
-    #         if contains_TSC(row[3], ""): # Used to filter by TSC Code, "" is no filter
-    #             ET_id = row[0]
-    #             control = row[4+i]
-    #             add_to_framework_dict(ET_id, control, new_framework_dict)
-    #
-    # print("~~~~~~~~~~~~")
-    # print("{0} -> {1}".format(framework_labels[0], framework_labels[1]))
-    # compare_framework_ETs([fw_dicts[0]], fw_dicts[1])
-    # print("~~~~~~~~~~~~")
-    # print("{0} -> {1}".format(framework_labels[1], framework_labels[0]))
-    # compare_framework_ETs([fw_dicts[1]], fw_dicts[0])
-    # dual_stacked_bar(fw_dicts[0], fw_dicts[1])
-    # single_stacked_bar([fw_dicts[0]], fw_dicts[1]) # Examines ISO assuming SOC is implemented
 
 
 if __name__ == "__main__":
