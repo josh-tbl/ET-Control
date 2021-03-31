@@ -199,6 +199,7 @@ def single_stacked_bar(framework_list, fw1_dict):
         loc='upper center', ncol=3)
     plt.subplots_adjust(left=0.05, right=0.95) # widen plot so legend fits
     plt.savefig(fw1_dict["label"].replace(" ", "_") + "_Graph.png")
+    plt.clf()
     # plt.show()
 
 
