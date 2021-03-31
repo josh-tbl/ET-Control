@@ -17,6 +17,7 @@ import csv
 import matplotlib.pyplot as plt
 import numpy as np
 import sys
+import argparse
 
 
 # Expects a csv with the ET ids in the 1st column, and frameworks in the
@@ -228,32 +229,25 @@ def main():
 
     argv = sys.argv
 
-    investigating = []
+    # Parse Command-line Args
+    parser = argparse.ArgumentParser(description='Compare an implemented framework with 1 or more investigated frameworks.')
+    parser.add_argument('-i', '--implemented', default="NIST CSF")
+    parser.add_argument('-v', '--investigating', nargs='+', default=["ISO 27001:2013"])
+    args = parser.parse_args()
 
-    ### Parse Command-line Args
-    try:
-        if (len(argv) > 4) and (argv[1] == "-i" and argv[3] == "-v"):
-            ### implemented
-            label1 = argv[2]
-            ### investigating
-            #label2 = argv[4]
-
-            for i in range(4, len(argv)):
-                investigating.append(argv[i])
-        else:
-            print "Invalid Syntax. Exiting..."
-            exit(0)
-    except IndexError:
-        print "Default frameworks will be used."
-        label1 = "NIST CSF"
-        investigating.insert(0, "ISO 27001:2013")
+    label1 = args.implemented
+    investigating = args.investigating
 
     print "Implemented Framework: " + label1
-    print "Investigating Frameworks: "
+    print "Investigating Frameworks... \n"
 
     s = []
 
-    x = f[label1]
+    try:
+        x = f[label1]
+    except KeyError:
+        sys.exit("Implemented Framework {} Does Not Exist".format(label1))
+
     x['label'] = label1
 
     frameworks_list = []
@@ -261,18 +255,14 @@ def main():
 
     for i in range(0, len(investigating)):
         print investigating[i]
-        s.insert(i, f[investigating[i]])
+        try:
+            s.insert(i, f[investigating[i]])
+        except KeyError:
+            sys.exit("Framework {} Does Not Exist".format(investigating[i]))
         s[i]['label'] = investigating[i]
         compare_framework_ETs(frameworks_list, s[i])
         single_stacked_bar(frameworks_list, s[i])
         print "\n"
-    #s = f[label2]
-    #s['label'] = label2
-
-
-
-    
-
 
     # file = "csv_ET.csv"
     # data = parse_csv(file)
