@@ -87,20 +87,12 @@ def add_to_framework_dict(ET_id, control, framework):
             framework[control] = [ET_id]
 
 
-# Returns a list of implemented ET ids given a list of framework dictionaries
-def find_implemented_ETs(framework_list):
-    ET_set = set()
-    for framework in framework_list:
-        for control, control_ET_list in framework.iteritems():
-            for ET_id in control_ET_list:
-                ET_set.add(ET_id)
-    return sorted(ET_set) # Returns a list of the ETs included in our frameworks
-
 
 # Determines based on implemented_ETs whether the controls in a framework
 # have been collected, patially collected, or are still outstanding, and
 # returns lists of controls for each
-def control_implemented_status(implemented_ETs, fw2):
+def control_implemented_status(framework_list, fw2):
+    implemented_ETs = find_implemented_ETs(framework_list)
     collected = []
     partial = []
     outstanding = []
@@ -114,6 +106,15 @@ def control_implemented_status(implemented_ETs, fw2):
         else:
             outstanding.append(control)
     return collected, partial, outstanding
+
+# Returns a list of implemented ET ids given a list of framework dictionaries
+def find_implemented_ETs(framework_list):
+    ET_set = set()
+    for framework in framework_list:
+        for control, control_ET_list in framework.iteritems():
+            for ET_id in control_ET_list:
+                ET_set.add(ET_id)
+    return sorted(ET_set) # Returns a list of the ETs included in our frameworks
 
 
 def output_to_file(collected, partial, outstanding):
@@ -136,8 +137,7 @@ def output_to_file(collected, partial, outstanding):
 
 
 def compare_framework_ETs(framework_list, fw2):
-    implemented_ETs = find_implemented_ETs(framework_list)
-    collected, partial, outstanding = control_implemented_status(implemented_ETs, fw2)
+    collected, partial, outstanding = control_implemented_status(framework_list, fw2)
     output_to_file(collected, partial, outstanding) #outputs the results to a txt file
     col_num = len(collected)
     par_num = len(partial)
@@ -150,11 +150,9 @@ def compare_framework_ETs(framework_list, fw2):
 
 
 def dual_stacked_bar(fw1_dict, fw2_dict):
-    fw1_implemented_ETs = find_implemented_ETs([fw1_dict])
-    fw2_implemented_ETs = find_implemented_ETs([fw2_dict])
 
-    fw1_values = control_implemented_status(fw1_implemented_ETs, fw2_dict)
-    fw2_values = control_implemented_status(fw2_implemented_ETs, fw1_dict)
+    fw1_values = control_implemented_status([fw1_dict], fw2_dict)
+    fw2_values = control_implemented_status([fw2_dict], fw1_dict)
     collected_vals = [len(fw1_values[0]), len(fw2_values[0])]
     partial_vals = [len(fw1_values[1]), len(fw2_values[1])]
     outstanding_vals = [len(fw1_values[2]), len(fw2_values[2])]
@@ -195,8 +193,7 @@ def dual_stacked_bar(fw1_dict, fw2_dict):
  # one or more already implemented frameworks
  # Still in progress
 def single_stacked_bar(framework_list, fw1_dict):
-    implemented_ETs = find_implemented_ETs(framework_list)
-    fw1_controls = control_implemented_status(implemented_ETs, fw1_dict)
+    fw1_controls = control_implemented_status(framework_list, fw1_dict)
     collected_vals = [len(fw1_controls[0])]
     partial_vals = [len(fw1_controls[1])]
     outstanding_vals = [len(fw1_controls[2])]
@@ -242,7 +239,7 @@ def create_csv_table(implemented_framework_dict, framework_list):
         for investigated_framework in framework_list:
             investigated_name = investigated_framework['label']
             common_controls, partial, unique = control_implemented_status([implemented_framework_dict], investigated_framework)
-            overlap = float(len(common_controls))/(len(partial) + len(unique))*100
+            overlap = float(len(common_controls))/(len(common_controls) + len(partial) + len(unique))*100
             writer.writerow([investigated_name, "{:.0f}%".format(overlap)])
 
 
