@@ -38,8 +38,10 @@ def create_dict_of_frameworks(filename):
                             framework[row[1]] = [] # col 1 has the control name
                         else:
                             framework = {}
-                            framework[row[1]] = []
+                            framework['label'] = f # Add the framework name to the dict
+                            framework[row[1]] = [] # Add control to framework
                             framework_dicts[f] =  framework # add framework to the framework dict
+
         except csv.Error as e:
             sys.exit('file {}, line {}: {}'.format(filename, reader.line_num, e))
     return framework_dicts
@@ -238,7 +240,6 @@ def create_csv_table(implemented_framework_dict, framework_list):
         writer.writerow(["Implemented "+ implemented_name, "Overlap"])
 
         for investigated_framework in framework_list:
-            print(investigated_framework)
             investigated_name = investigated_framework['label']
             common_controls, partial, unique = control_implemented_status([implemented_framework_dict], investigated_framework)
             overlap = float(len(common_controls))/(len(partial) + len(unique))*100
@@ -262,16 +263,16 @@ def main():
     fill_frameworks_with_ets('TugbotLogic-Evidence-Tasks.csv', f)
 
     ### implemented
-    label1 = "HIPAA"
+    label1 = "SOC 2"
     ## investigating
     label2 = "SOC 2"
 
     x = f[label1]
     s = f[label2]
     y = f["ISO 27001:2013"]
-    x['label'] = label1
-    s['label'] = label2
-    
+    # x['label'] = label1
+    # s['label'] = label2
+
 
     frameworks_list = []
     frameworks_list.append(x)
