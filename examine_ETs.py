@@ -1,5 +1,6 @@
 # Used to examine shared ETs between frameworks
 # Made by Lucas Ramos-Strankman for TugboatLogic
+# Parsing Capabilities added by Joshua Cordeiro-Zebkowitz (March 31, 2021)
 # Jan 2021
 
 # Code was designed to be used from the commandline
@@ -235,7 +236,10 @@ def main():
     parser.add_argument('-v', '--investigating', nargs='+', default=["ISO 27001:2013"])
     args = parser.parse_args()
 
+    ### Implemented Framework
     label1 = args.implemented
+
+    ### Investigating Frameworks
     investigating = args.investigating
 
     print "Implemented Framework: " + label1
