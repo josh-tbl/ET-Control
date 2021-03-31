@@ -19,19 +19,6 @@ import numpy as np
 import sys
 
 
-# Expects a csv with the ET ids in the 1st column, and frameworks in the
-# 5th onward columns
-def parse_csv(filename):
-    info = []
-    with open(filename, 'rb') as f:
-        reader = csv.reader(f)
-        try:
-            for row in reader:
-                info.append(row)
-        except csv.Error as e:
-            sys.exit('file {}, line {}: {}'.format(filename, reader.line_num, e))
-    return info
-
 # Takes the control_export as input and returns a dictionary of dictionaries
 # where each dictionary is a framework in tbl. These are then dictionaries with
 # their associated controls as keys mapping to empty lists
@@ -244,15 +231,6 @@ def single_stacked_bar(framework_list, fw1_dict):
     # plt.show()
 
 
-def manage_header(header):
-    if len(header) < 6:
-        print("Csv not in expected form, expected at least 6 columns, only found {0}. See README for more detail".
-            format(len(header)))
-        sys.exit()
-
-    return header[4:] # These are the names of the included frameworks
-
-
 # Assumes group_codes are separated by a '\n'
 def contains_TSC(group_codes, check_code):
     if check_code == "": # If no code, then just accept it
@@ -285,28 +263,7 @@ def main():
     single_stacked_bar(frameworks_list, s)
 
 
-    # file = "csv_ET.csv"
-    # data = parse_csv(file)
-    # framework_labels = manage_header(data.pop(0)) # Popped so the header row is removed
-    #
-    # fw_dicts = []
-    # for i in range(len(framework_labels)):
-    #     new_framework_dict = {'label':framework_labels[i]}
-    #     fw_dicts.append(new_framework_dict)
-    #     for row in data:
-    #         if contains_TSC(row[3], ""): # Used to filter by TSC Code, "" is no filter
-    #             ET_id = row[0]
-    #             control = row[4+i]
-    #             add_to_framework_dict(ET_id, control, new_framework_dict)
-    #
-    # print("~~~~~~~~~~~~")
-    # print("{0} -> {1}".format(framework_labels[0], framework_labels[1]))
-    # compare_framework_ETs([fw_dicts[0]], fw_dicts[1])
-    # print("~~~~~~~~~~~~")
-    # print("{0} -> {1}".format(framework_labels[1], framework_labels[0]))
-    # compare_framework_ETs([fw_dicts[1]], fw_dicts[0])
-    # dual_stacked_bar(fw_dicts[0], fw_dicts[1])
-    # single_stacked_bar([fw_dicts[0]], fw_dicts[1]) # Examines ISO assuming SOC is implemented
+
 
 
 if __name__ == "__main__":
