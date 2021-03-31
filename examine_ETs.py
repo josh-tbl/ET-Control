@@ -158,49 +158,7 @@ def compare_framework_ETs(framework_list, fw2):
     print("Partially collected controls: {0}".format(par_num))
     print("Controls with unique ETs: {0}".format(out_num))
     print("Collected controls/rest = {}/{} = {:.2f}% ".format(col_num, all_num, float(col_num)/all_num*100 ))
-
-
-def dual_stacked_bar(fw1_dict, fw2_dict):
-    fw1_implemented_ETs = find_implemented_ETs([fw1_dict])
-    fw2_implemented_ETs = find_implemented_ETs([fw2_dict])
-
-    fw1_values = control_implemented_status(fw1_implemented_ETs, fw2_dict)
-    fw2_values = control_implemented_status(fw2_implemented_ETs, fw1_dict)
-    collected_vals = [len(fw1_values[0]), len(fw2_values[0])]
-    partial_vals = [len(fw1_values[1]), len(fw2_values[1])]
-    outstanding_vals = [len(fw1_values[2]), len(fw2_values[2])]
-
-    collected_and_partial = []
-    for collected_val, partial_val in zip(collected_vals, partial_vals):
-        collected_and_partial.append(collected_val + partial_val)
-
-    totals = []
-    for value, outstanding_val in zip(collected_and_partial, outstanding_vals):
-        totals.append(value + outstanding_val)
-
-    N = 2
-    ind = np.arange(N)    # the x locations for the groups
-    width = 0.3
-
-    p1 = plt.bar(ind, collected_vals, width, align='center')
-    p2 = plt.bar(ind, partial_vals, width,
-                 bottom=collected_vals, color='#f59542', align='center')
-    p3 = plt.bar(ind, outstanding_vals, width,
-              bottom=collected_and_partial, color='#f5424e', align='center')
-
-    fw1_label = fw1_dict.get('label')
-    fw2_label = fw2_dict.get('label')
-    plt.ylabel('Number of controls')
-    plt.title('Collected controls by framework')
-    plt.xticks(ind, ['{0} to {1}'.format(fw1_label, fw2_label),
-        '{0} to {1}'.format(fw2_label, fw1_label) ])
-    plt.yticks(np.arange(0, max(totals)+50, 10))
-    plt.legend((p1[0], p2[0], p3[0]), ["Collected", "Partially Collected", "Outstanding"],
-        loc='upper center', ncol=3)
-
-    plt.savefig("figure1.png")
-    plt.show()
-
+    
 
  # Shows a single bar representing control status based on
  # one or more already implemented frameworks
