@@ -109,6 +109,7 @@ def control_implemented_status(framework_list, fw2):
             outstanding.append(control)
     return collected, partial, outstanding
 
+
 # Returns a list of implemented ET ids given a list of framework dictionaries
 def find_implemented_ETs(framework_list):
     ET_set = set()
@@ -145,10 +146,11 @@ def compare_framework_ETs(framework_list, fw2):
     par_num = len(partial)
     out_num = len(outstanding)
     all_num = col_num + par_num + out_num
+    print("Total number of controls: {}".format(all_num))
     print("Collected controls: {0}".format(col_num))
     print("Partially collected controls: {0}".format(par_num))
     print("Controls with unique ETs: {0}".format(out_num))
-    print("Collected controls/rest = {}/{} = {:.0f}% ".format(col_num, all_num, float(col_num)/all_num*100 ))
+    print("Overlap = {}/{} = {:.0f}% ".format(col_num, all_num, float(col_num)/all_num*100 ))
 
 
  # Shows a single bar representing control status based on
@@ -185,7 +187,7 @@ def single_stacked_bar(framework_list, fw1_dict):
     plt.ylabel('Number of controls')
     plt.xticks(np.arange(3), ["",fw1_dict['label'],""])
     plt.yticks(np.arange(0, max(totals)+50, 10))
-    plt.legend((p1[0], p2[0], p3[0]), ["Collected", "Partially Collected", "Outstanding"],
+    plt.legend((p1[0], p2[0], p3[0]), ["Collected", "Partially Collected", "Controls with\nUnique ETs"],
         loc='upper center', ncol=3)
     plt.subplots_adjust(left=0.05, right=0.95) # widen plot so legend fits
     plt.savefig(fw1_dict["label"].replace(" ", "_") + "_Graph.png")
