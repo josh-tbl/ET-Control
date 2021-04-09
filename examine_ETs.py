@@ -1,5 +1,6 @@
 # Used to examine shared ETs between frameworks
 # Made by Lucas Ramos-Strankman for TugboatLogic
+# Parsing Capabilities added by Joshua Cordeiro-Zebkowitz (March 31, 2021)
 # Jan 2021
 
 # Code was designed to be used from the commandline
@@ -17,6 +18,7 @@ import csv
 import matplotlib.pyplot as plt
 import numpy as np
 import sys
+import argparse
 
 
 # Takes the control_export as input and returns a dictionary of dictionaries
@@ -117,8 +119,8 @@ def find_implemented_ETs(framework_list):
     return sorted(ET_set) # Returns a list of the ETs included in our frameworks
 
 
-def output_to_file(collected, partial, outstanding):
-    file = open("Control_breakdown.txt", "w")
+def output_to_file(collected, partial, outstanding, framework_name):
+    file = open(framework_name.replace(" ", "_") + "_Control_breakdown.txt", "w")
 
     file.write("Collected Controls:\n")
     for control in collected:
@@ -138,7 +140,7 @@ def output_to_file(collected, partial, outstanding):
 
 def compare_framework_ETs(framework_list, fw2):
     collected, partial, outstanding = control_implemented_status(framework_list, fw2)
-    output_to_file(collected, partial, outstanding) #outputs the results to a txt file
+    output_to_file(collected, partial, outstanding, fw2['label']) #outputs the results to a txt file
     col_num = len(collected)
     par_num = len(partial)
     out_num = len(outstanding)
@@ -147,46 +149,6 @@ def compare_framework_ETs(framework_list, fw2):
     print("Partially collected controls: {0}".format(par_num))
     print("Controls with unique ETs: {0}".format(out_num))
     print("Collected controls/rest = {}/{} = {:.2f}% ".format(col_num, all_num, float(col_num)/all_num*100 ))
-
-
-def dual_stacked_bar(fw1_dict, fw2_dict):
-
-    fw1_values = control_implemented_status([fw1_dict], fw2_dict)
-    fw2_values = control_implemented_status([fw2_dict], fw1_dict)
-    collected_vals = [len(fw1_values[0]), len(fw2_values[0])]
-    partial_vals = [len(fw1_values[1]), len(fw2_values[1])]
-    outstanding_vals = [len(fw1_values[2]), len(fw2_values[2])]
-
-    collected_and_partial = []
-    for collected_val, partial_val in zip(collected_vals, partial_vals):
-        collected_and_partial.append(collected_val + partial_val)
-
-    totals = []
-    for value, outstanding_val in zip(collected_and_partial, outstanding_vals):
-        totals.append(value + outstanding_val)
-
-    N = 2
-    ind = np.arange(N)    # the x locations for the groups
-    width = 0.3
-
-    p1 = plt.bar(ind, collected_vals, width, align='center')
-    p2 = plt.bar(ind, partial_vals, width,
-                 bottom=collected_vals, color='#f59542', align='center')
-    p3 = plt.bar(ind, outstanding_vals, width,
-              bottom=collected_and_partial, color='#f5424e', align='center')
-
-    fw1_label = fw1_dict.get('label')
-    fw2_label = fw2_dict.get('label')
-    plt.ylabel('Number of controls')
-    plt.title('Collected controls by framework')
-    plt.xticks(ind, ['{0} to {1}'.format(fw1_label, fw2_label),
-        '{0} to {1}'.format(fw2_label, fw1_label) ])
-    plt.yticks(np.arange(0, max(totals)+50, 10))
-    plt.legend((p1[0], p2[0], p3[0]), ["Collected", "Partially Collected", "Outstanding"],
-        loc='upper center', ncol=3)
-
-    plt.savefig("figure1.png")
-    plt.show()
 
 
  # Shows a single bar representing control status based on
@@ -226,7 +188,8 @@ def single_stacked_bar(framework_list, fw1_dict):
     plt.legend((p1[0], p2[0], p3[0]), ["Collected", "Partially Collected", "Outstanding"],
         loc='upper center', ncol=3)
     plt.subplots_adjust(left=0.05, right=0.95) # widen plot so legend fits
-    plt.savefig("figure1.png")
+    plt.savefig(fw1_dict["label"].replace(" ", "_") + "_Graph.png")
+    plt.clf()
     # plt.show()
 
 # Creates a csv file that tables the relationship between an implemented framework
@@ -256,29 +219,38 @@ def contains_TSC(group_codes, check_code):
 
 
 def main():
-    f = create_dict_of_frameworks('controls_export.csv')
-    fill_frameworks_with_ets('TugbotLogic-Evidence-Tasks.csv', f)
+    framework_dicts = create_dict_of_frameworks('controls_export.csv')
+    fill_frameworks_with_ets('TugbotLogic-Evidence-Tasks.csv', framework_dicts)
 
-    ### implemented
-    label1 = "SOC 2"
-    ## investigating
-    label2 = "SOC 2"
+    # Parse Command-line Args
+    parser = argparse.ArgumentParser(description='Compare an implemented framework with 1 or more investigated frameworks.')
+    parser.add_argument('-i', '--implemented', default="SOC 2")
+    parser.add_argument('-v', '--investigating', nargs='+', default=["ISO 27001:2013"])
+    args = parser.parse_args()
 
-    x = f[label1]
-    s = f[label2]
-    y = f["ISO 27001:2013"]
-    # x['label'] = label1
-    # s['label'] = label2
+    ### Implemented Framework
+    implemented_name = args.implemented
 
 
-    frameworks_list = []
-    frameworks_list.append(x)
+    investigating_names = args.investigating
 
-    create_csv_table(x,[s,y])
-    # compare_framework_ETs(frameworks_list, s)
-    # single_stacked_bar(frameworks_list, s)
+    print "Implemented Framework: " + implemented_name
+    print "Investigating Frameworks... \n"
 
+    try:
+        ### Implemented Framework
+        implemented_framework = framework_dicts[args.implemented]
+        implemented_framework['label'] = args.implemented
 
+        ### For each framework to investigate
+        for framework_name in args.investigating:
+            print(framework_name)
+            framework_dicts[framework_name]['label'] = framework_name
+            compare_framework_ETs([implemented_framework], framework_dicts[framework_name])
+            single_stacked_bar([implemented_framework], framework_dicts[framework_name])
+            print "\n"
+    except KeyError:
+        sys.exit("Implemented Framework {} Does Not Exist".format(implemented_name))
 
 
 
