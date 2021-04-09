@@ -148,7 +148,7 @@ def compare_framework_ETs(framework_list, fw2):
     print("Collected controls: {0}".format(col_num))
     print("Partially collected controls: {0}".format(par_num))
     print("Controls with unique ETs: {0}".format(out_num))
-    print("Collected controls/rest = {}/{} = {:.2f}% ".format(col_num, all_num, float(col_num)/all_num*100 ))
+    print("Collected controls/rest = {}/{} = {:.0f}% ".format(col_num, all_num, float(col_num)/all_num*100 ))
 
 
  # Shows a single bar representing control status based on
@@ -242,13 +242,18 @@ def main():
         implemented_framework = framework_dicts[args.implemented]
         implemented_framework['label'] = args.implemented
 
+        investigating_framework_list = []
+
         ### For each framework to investigate
         for framework_name in args.investigating:
             print(framework_name)
             framework_dicts[framework_name]['label'] = framework_name
+            investigating_framework_list.append(framework_dicts[framework_name])
             compare_framework_ETs([implemented_framework], framework_dicts[framework_name])
             single_stacked_bar([implemented_framework], framework_dicts[framework_name])
             print "\n"
+
+        create_csv_table(implemented_framework, investigating_framework_list)
     except KeyError:
         sys.exit("Implemented Framework {} Does Not Exist".format(implemented_name))
 
